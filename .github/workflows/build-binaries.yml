@@ -1,0 +1,110 @@
+name: Release binaries
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: enczip-linux
+            build_name: encrypted-zip-manager
+            pyinstaller_args: --onefile --windowed
+            package_cmd: |
+              cd dist
+              tar -czf ../enczip-linux.tar.gz encrypted-zip-manager
+            package_path: enczip-linux.tar.gz
+
+          - os: windows-latest
+            artifact_name: enczip-windows
+            build_name: encrypted-zip-manager.exe
+            pyinstaller_args: --onefile --windowed
+            package_cmd: |
+              Compress-Archive -Path dist\encrypted-zip-manager.exe -DestinationPath enczip-windows.zip
+            package_path: enczip-windows.zip
+
+          - os: macos-latest
+            artifact_name: enczip-macos
+            build_name: encrypted-zip-manager.app
+            pyinstaller_args: --windowed
+            package_cmd: |
+              cd dist
+              zip -r ../enczip-macos.zip encrypted-zip-manager.app
+            package_path: enczip-macos.zip
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller cryptography
+
+      - name: Build binary
+        shell: bash
+        run: |
+          pyinstaller \
+            --noconfirm \
+            --clean \
+            --name "encrypted-zip-manager" \
+            ${{ matrix.pyinstaller_args }} \
+            encrypted_zip_manager.py
+
+      - name: Package artifact (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ${{ matrix.package_cmd }}
+
+      - name: Package artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ${{ matrix.package_cmd }}
+
+      - name: Upload packaged artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.package_path }}
+          retention-days: 7
+
+  release:
+    name: create-release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Show files
+        run: find release-assets -type f | sort
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release-assets/enczip-linux/enczip-linux.tar.gz
+            release-assets/enczip-windows/enczip-windows.zip
+            release-assets/enczip-macos/enczip-macos.zip
