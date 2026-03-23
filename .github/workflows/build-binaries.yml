@@ -67,7 +67,7 @@ jobs:
             --clean \
             --name "encrypted-zip-manager" \
             ${{ matrix.pyinstaller_args }} \
-            encrypted_zip_manager.py
+            main.py
 
       - name: Package artifact (Linux/macOS)
         if: runner.os != 'Windows'
