@@ -54,15 +54,14 @@ except ImportError:
     print("cryptography is required:  pip install cryptography")
     sys.exit(1)
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 #  AES-256-CBC Encrypted Container
 # ═══════════════════════════════════════════════════════════════════════════
 
 MAGIC = b"ENCZIP01"
 MODE_PASSPHRASE = 0x00
-MODE_RAW_KEY    = 0x01
-HEADER_SIZE     = 8 + 1 + 32 + 16 + 32   # 89 bytes
+MODE_RAW_KEY = 0x01
+HEADER_SIZE = 8 + 1 + 32 + 16 + 32  # 89 bytes
 
 
 class CryptoError(Exception):
@@ -135,10 +134,10 @@ class EncryptedContainer:
         if magic != MAGIC:
             raise CryptoError("Not an ENCZIP file (invalid magic header)")
 
-        mode  = container[8]
-        salt  = container[9:41]
-        iv    = container[41:57]
-        mac   = container[57:89]
+        mode = container[8]
+        salt = container[9:41]
+        iv = container[41:57]
+        mac = container[57:89]
         ciphertext = container[89:]
 
         if mode == MODE_RAW_KEY:
@@ -269,7 +268,7 @@ def parse_hex(text: str, expected_len: int) -> bytes | None:
     try:
         data = bytes.fromhex(text)
         if len(data) != expected_len:
-            raise ValueError(f"Expected {expected_len} bytes ({expected_len*2} hex chars), got {len(data)}")
+            raise ValueError(f"Expected {expected_len} bytes ({expected_len * 2} hex chars), got {len(data)}")
         return data
     except ValueError as exc:
         messagebox.showerror("Invalid hex", str(exc))
@@ -344,9 +343,9 @@ class EditorRegistry:
             return self._detect_linux()
 
     def _detect_macos(self) -> dict[str, str]:
-        exts = [".txt",".md",".json",".py",".js",".html",".css",".xml",".csv",
-                ".sh",".docx",".doc",".xlsx",".xls",".pptx",".ppt",".pdf",
-                ".png",".jpg",".jpeg",".gif",".svg",".mp3",".mp4",".mov"]
+        exts = [".txt", ".md", ".json", ".py", ".js", ".html", ".css", ".xml", ".csv",
+                ".sh", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".pdf",
+                ".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp3", ".mp4", ".mov"]
         r = {}
         for ext in exts:
             app = self._macos_app(ext)
@@ -357,7 +356,7 @@ class EditorRegistry:
     def _macos_app(ext: str) -> str | None:
         try:
             if shutil.which("duti"):
-                r = subprocess.run(["duti","-x",ext.lstrip(".")],
+                r = subprocess.run(["duti", "-x", ext.lstrip(".")],
                                    capture_output=True, text=True, timeout=3)
                 if r.returncode == 0 and r.stdout.strip():
                     name = r.stdout.strip().split("\n")[0].strip()
@@ -368,9 +367,9 @@ class EditorRegistry:
         return None
 
     def _detect_windows(self) -> dict[str, str]:
-        exts = [".txt",".md",".json",".py",".js",".html",".css",".xml",".csv",
-                ".docx",".doc",".xlsx",".xls",".pptx",".ppt",".pdf",
-                ".png",".jpg",".jpeg",".gif",".svg",".mp3",".mp4"]
+        exts = [".txt", ".md", ".json", ".py", ".js", ".html", ".css", ".xml", ".csv",
+                ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".pdf",
+                ".png", ".jpg", ".jpeg", ".gif", ".svg", ".mp3", ".mp4"]
         r = {}
         for ext in exts:
             app = self._windows_app(ext)
@@ -381,12 +380,12 @@ class EditorRegistry:
     @staticmethod
     def _windows_app(ext: str) -> str | None:
         try:
-            r = subprocess.run(["cmd","/c",f"assoc {ext}"],
+            r = subprocess.run(["cmd", "/c", f"assoc {ext}"],
                                capture_output=True, text=True, timeout=3)
             if r.returncode != 0:
                 return None
             ftype = r.stdout.strip().split("=", 1)[-1]
-            r2 = subprocess.run(["cmd","/c",f"ftype {ftype}"],
+            r2 = subprocess.run(["cmd", "/c", f"ftype {ftype}"],
                                 capture_output=True, text=True, timeout=3)
             if r2.returncode != 0:
                 return None
@@ -425,7 +424,7 @@ class EditorRegistry:
     @staticmethod
     def _linux_app(mime: str) -> str | None:
         try:
-            r = subprocess.run(["xdg-mime","query","default",mime],
+            r = subprocess.run(["xdg-mime", "query", "default", mime],
                                capture_output=True, text=True, timeout=3)
             desktop = r.stdout.strip()
             if not desktop:
@@ -464,8 +463,8 @@ class EncryptedZipManager(tk.Tk):
 
         # Crypto state
         self.passphrase: str | None = None
-        self.raw_key: bytes | None = None   # 32 bytes
-        self.raw_iv: bytes | None = None    # 16 bytes
+        self.raw_key: bytes | None = None  # 32 bytes
+        self.raw_iv: bytes | None = None  # 16 bytes
 
         self.tmp_dir = tempfile.mkdtemp(prefix="enczip_")
 
@@ -504,13 +503,13 @@ class EncryptedZipManager(tk.Tk):
         style = ttk.Style(self)
         style.theme_use("clam")
 
-        bg      = "#1e1e2e"
+        bg = "#1e1e2e"
         surface = "#2a2a3c"
-        accent  = "#7c3aed"
+        accent = "#7c3aed"
         text_fg = "#e2e2e8"
-        dim     = "#888898"
+        dim = "#888898"
 
-        style.configure(".",       background=bg, foreground=text_fg, fieldbackground=surface)
+        style.configure(".", background=bg, foreground=text_fg, fieldbackground=surface)
         style.configure("TFrame", background=bg)
         style.configure("TLabel", background=bg, foreground=text_fg, font=("Segoe UI", 10))
         style.configure("Dim.TLabel", background=bg, foreground=dim, font=("Segoe UI", 9))
@@ -568,12 +567,13 @@ class EncryptedZipManager(tk.Tk):
         # Action bar
         actions = ttk.Frame(self)
         actions.pack(fill="x", padx=12, pady=(4, 12))
-        for txt, cmd in [("New File",      self._new_file),
-                         ("Add Files",     self._add_files),
-                         ("Extract",       self._extract_selected),
-                         ("Edit in Editor",self._edit_selected),
-                         ("Delete",        self._delete_selected),
-                         ("Extract All",   self._extract_all)]:
+        for txt, cmd in [("New File", self._new_file),
+                         ("Add Files", self._add_files),
+                         ("Add Folder", self._add_folder),
+                         ("Extract", self._extract_selected),
+                         ("Edit in Editor", self._edit_selected),
+                         ("Delete", self._delete_selected),
+                         ("Extract All", self._extract_all)]:
             ttk.Button(actions, text=txt, command=cmd).pack(side="left", padx=4)
 
     # ── Credentials dialog ──────────────────────────────────────────────
@@ -691,14 +691,17 @@ class EncryptedZipManager(tk.Tk):
 
         def add_m():
             self._ext_editor_dialog(dlg, tree)
+
         def edit_m():
             s = tree.selection()
             if s:
                 self._ext_editor_dialog(dlg, tree, s[0], self.editors.ext_map.get(s[0], ""))
+
         def del_m():
             s = tree.selection()
             if s:
                 tree.delete(s[0])
+
         def redetect():
             det = self.editors._detect_system_defaults()
             for ext in sorted(det):
@@ -750,16 +753,17 @@ class EncryptedZipManager(tk.Tk):
         d.configure(bg="#1e1e2e")
         d.transient(parent)
         d.grab_set()
-        ttk.Label(d, text="Extension:").grid(row=0, column=0, padx=12, pady=(12,4), sticky="w")
+        ttk.Label(d, text="Extension:").grid(row=0, column=0, padx=12, pady=(12, 4), sticky="w")
         ent_ext = ttk.Entry(d, width=12)
         ent_ext.insert(0, ext)
-        ent_ext.grid(row=0, column=1, padx=4, pady=(12,4), sticky="w")
+        ent_ext.grid(row=0, column=1, padx=4, pady=(12, 4), sticky="w")
         ttk.Label(d, text="Editor:").grid(row=1, column=0, padx=12, pady=4, sticky="w")
         ent_ed = ttk.Entry(d, width=40)
         ent_ed.insert(0, editor)
         ent_ed.grid(row=1, column=1, padx=4, pady=4)
         ttk.Button(d, text="Browse\u2026", command=lambda: self._browse_into(ent_ed)).grid(
             row=1, column=2, padx=4, pady=4)
+
         def confirm():
             e = ent_ext.get().strip()
             ed = ent_ed.get().strip()
@@ -773,6 +777,7 @@ class EncryptedZipManager(tk.Tk):
             else:
                 tree.insert("", "end", iid=e, values=(e, ed))
             d.destroy()
+
         ttk.Button(d, text="Save", command=confirm).grid(row=2, column=0, columnspan=3, pady=8)
         (ent_ext if not ext else ent_ed).focus_set()
         d.bind("<Return>", lambda ev: confirm())
@@ -855,9 +860,9 @@ class EncryptedZipManager(tk.Tk):
         dlg.transient(self)
         dlg.grab_set()
 
-        ttk.Label(dlg, text="File name:").grid(row=0, column=0, padx=12, pady=(16,4), sticky="w")
+        ttk.Label(dlg, text="File name:").grid(row=0, column=0, padx=12, pady=(16, 4), sticky="w")
         ent_n = ttk.Entry(dlg, width=40)
-        ent_n.grid(row=0, column=1, padx=12, pady=(16,4))
+        ent_n.grid(row=0, column=1, padx=12, pady=(16, 4))
         ent_n.insert(0, "new_file.txt")
         ttk.Label(dlg, text="Folder:").grid(row=1, column=0, padx=12, pady=4, sticky="w")
         ent_f = ttk.Entry(dlg, width=40)
@@ -915,6 +920,55 @@ class EncryptedZipManager(tk.Tk):
             zb = zip_add_files(zb, files)
             self._write_zip(zb)
             self._load_archive()
+        except Exception as exc:
+            messagebox.showerror("Error", str(exc))
+
+    # ── Add folder ──────────────────────────────────────────────────────
+
+    def _add_folder(self):
+        if not self.archive_path or not self._has_credentials():
+            messagebox.showinfo("No archive", "Create or open an archive first.")
+            return
+        folder = filedialog.askdirectory(title="Select Folder to Add")
+        if not folder:
+            return
+
+        try:
+            zb = self._read_zip() if os.path.isfile(self.archive_path) else zip_create_empty()
+            files: dict[str, bytes] = {}
+            base_name = os.path.basename(folder.rstrip("/\\"))
+            skipped = 0
+
+            for root, dirs, filenames in os.walk(folder):
+                # Skip hidden dirs
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
+                for fname in filenames:
+                    if fname.startswith("."):
+                        continue
+                    full_path = os.path.join(root, fname)
+                    # Build archive path: folder_name/relative/path
+                    rel = os.path.relpath(full_path, os.path.dirname(folder))
+                    # Normalize separators to /
+                    arcname = rel.replace(os.sep, "/")
+                    try:
+                        with open(full_path, "rb") as f:
+                            files[arcname] = f.read()
+                    except (PermissionError, OSError):
+                        skipped += 1
+
+            if not files:
+                messagebox.showinfo("Empty", "No files found in the selected folder.")
+                return
+
+            zb = zip_add_files(zb, files)
+            self._write_zip(zb)
+            self._load_archive()
+
+            msg = f"Added {len(files)} file(s) from '{base_name}'"
+            if skipped:
+                msg += f"\n({skipped} file(s) skipped due to permission errors)"
+            messagebox.showinfo("Done", msg)
+
         except Exception as exc:
             messagebox.showerror("Error", str(exc))
 
